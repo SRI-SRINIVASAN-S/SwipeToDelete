@@ -5,6 +5,10 @@ This project uses [FlashList](https://shopify.github.io/flash-list/) for efficie
 
 ---
 
+## Video Demonstration
+
+https://youtu.be/hWGQEc7FRxc
+
 ## Features
 
 - **Swipe to Delete:** Swipe any item to the left to delete it.
