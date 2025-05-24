@@ -1,4 +1,4 @@
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { GlobalStyles } from "../constants/colors";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
 
-const initialItems = Array.from({ length: 15 }, (_, i) => ({
+const initialItems = Array.from({ length: 30 }, (_, i) => ({
   id: `${i}`,
   text: `Item ${i + 1}`,
 }));
@@ -58,7 +58,7 @@ const SwipeListScreen = () => {
     setShowUndoOption(true);
 
     // Start a 4-second timer to hide undo option
-    if (undoButtonTimer) clearTimeout(undoButtonTimer);
+    if (undoButtonTimer.current) clearTimeout(undoButtonTimer.current);
     undoButtonTimer.current = setTimeout(() => {
       setLastDeletedListItem(null);
       setShowUndoOption(false);
@@ -106,6 +106,14 @@ const SwipeListScreen = () => {
       ),
     });
   }, [navigation, listItems]);
+
+  useEffect(() => {
+    return () => {
+      if (undoButtonTimer.current) {
+        clearTimeout(undoButtonTimer.current);
+      }
+    };
+  }, []);
 
   function renderListItems({ item }) {
     return (
