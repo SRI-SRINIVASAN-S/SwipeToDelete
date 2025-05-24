@@ -22,11 +22,12 @@ export default function App() {
               tabBarActiveTintColor: GlobalStyles.colors.accent500,
               tabBarStyle: {
                 backgroundColor: GlobalStyles.colors.primary500,
+                padding: 30,
               },
               tabBarLabelStyle: {
-                fontSize: 15,
+                fontSize: 13,
                 fontFamily: "Georgia",
-                fontWeight: 300,
+                fontWeight: 200,
               },
               tabBarActiveTintColor: GlobalStyles.colors.accent500,
             }}

@@ -1,24 +1,30 @@
 import { useState, useRef, useLayoutEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Button } from "react-native";
-import { Pressable, Swipeable } from "react-native-gesture-handler";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Pressable,
+} from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { FlashList } from "@shopify/flash-list";
 import { MaterialIcons } from "@expo/vector-icons";
 import { GlobalStyles } from "../constants/colors";
 import Entypo from "@expo/vector-icons/Entypo";
 import { useNavigation } from "@react-navigation/native";
 
-const initialItems = Array.from({ length: 3 }, (_, i) => ({
+const initialItems = Array.from({ length: 15 }, (_, i) => ({
   id: `${i}`,
   text: `Item ${i + 1}`,
 }));
 
 const SwipeListScreen = () => {
   const [listItems, setListItems] = useState(initialItems);
-  const [lastDeletedListItem, setLastDeletedListItem] = useState([]);
+  const [lastDeletedListItem, setLastDeletedListItem] = useState(null);
   const [showUndoOption, setShowUndoOption] = useState(false);
+  const [nextId, setNextId] = useState(initialItems.length);
   const undoButtonTimer = useRef(null); // Timer for hiding the undo button
   const swappableRefs = useRef({}); // Store refs for each Swipeable item
-  const [nextId, setNextId] = useState(initialItems.length);
   const navigation = useNavigation();
 
   /**
@@ -48,42 +54,36 @@ const SwipeListScreen = () => {
     );
 
     // Save deleted item for potential undo
-    setLastDeletedListItem((prev) => [swipedDeleteItem, ...prev]);
+    setLastDeletedListItem(swipedDeleteItem);
     setShowUndoOption(true);
 
     // Start a 4-second timer to hide undo option
     if (undoButtonTimer) clearTimeout(undoButtonTimer);
     undoButtonTimer.current = setTimeout(() => {
-      setLastDeletedListItem([]);
+      setLastDeletedListItem(null);
       setShowUndoOption(false);
-    }, 9000);
+    }, 7000);
   }
 
   /**
    * Restore the last deleted item
    */
   function handleUndoLastDeleted() {
-    if (lastDeletedListItem.length > 0) {
-      const [lastDeleted, ...restDeleteItems] = lastDeletedListItem;
-      setListItems((prev) => [lastDeleted, ...prev]);
-      setLastDeletedListItem(restDeleteItems);
-      if (restDeleteItems.length === 0) {
-        setShowUndoOption(false);
-      }
+    if (lastDeletedListItem) {
+      setListItems((prev) => [lastDeletedListItem, ...prev]);
+      setShowUndoOption(false);
+      setLastDeletedListItem(null);
+      clearTimeout(undoButtonTimer.current);
     }
-    clearTimeout(undoButtonTimer.current);
   }
 
   /**
    * Render the red delete button shown when swiping left
    */
-  function showLeftSwipedOptions(swipedItem) {
+  function showLeftSwipedOptions() {
     return (
-      <TouchableOpacity
-        style={styles.deleteBox}
-        onPress={() => handleDeleteListItem(swipedItem)}
-      >
-        <MaterialIcons name="delete-forever" size={32} color="white" />
+      <TouchableOpacity style={styles.deleteBox}>
+        <MaterialIcons name="delete-sweep" size={32} color="white" />
       </TouchableOpacity>
     );
   }
@@ -114,9 +114,11 @@ const SwipeListScreen = () => {
           // Store ref to programmatically close it later
           if (ref) swappableRefs.current[item.id] = ref;
         }}
-        renderLeftActions={() => showLeftSwipedOptions(item)}
-        onSwipeableWillOpen={() => {
-          // Close all other opened swipeables when a new one is swiped
+        renderLeftActions={showLeftSwipedOptions}
+        onSwipeableWillOpen={(direction) => {
+          if (direction === "left") {
+            handleDeleteListItem(item);
+          }
           Object.entries(swappableRefs.current).forEach(([id, ref]) => {
             if (id !== item.id && ref) ref.close();
           });
@@ -146,9 +148,7 @@ const SwipeListScreen = () => {
           style={styles.undoBox}
           onPress={handleUndoLastDeleted}
         >
-          <Text style={styles.undoText}>
-            Undo {lastDeletedListItem[0].text}
-          </Text>
+          <Text style={styles.undoText}>Undo {lastDeletedListItem.text}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -171,13 +171,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   separator: {
-    height: 2,
-    backgroundColor: "#eee",
+    height: 1,
+    backgroundColor: GlobalStyles.colors.gray500,
   },
   deleteBox: {
     backgroundColor: "red",
     justifyContent: "center",
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     paddingHorizontal: 20,
     flex: 1,
   },
